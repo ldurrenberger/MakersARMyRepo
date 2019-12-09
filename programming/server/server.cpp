@@ -22,8 +22,14 @@ BLEClientBas  clientBas;  // battery client
 BLEClientDis  clientDis;  // device information client
 BLEClientUart clientUart; // bleuart client
 
+const int flexpin = A0; 
+int old = 0;
+
 void setup()
 {
+
+  pinMode(flexpin, INPUT);
+  
   Serial.begin(115200);
   while ( !Serial ) delay(10);   // for nrf52840 with native usb
 
@@ -185,6 +191,26 @@ void bleuart_rx_callback(BLEClientUart& uart_svc)
 
 void loop()
 {
+
+   int flexposition;    // Input value from the analog pin.
+  int servoposition;   // Output value to the servo.
+
+  // Read the position of the flex sensor (0 to 1023):
+
+  flexposition = analogRead(flexpin);
+
+  servoposition = map(flexposition, 600, 900, 0, 180);
+  servoposition = constrain(servoposition, 0, 180);
+
+
+ //  if (old != flexposition) { 
+      Serial.print("sensor: ");
+      Serial.print(flexposition);
+      Serial.print("  servo: ");
+      Serial.println(servoposition);
+ //  }
+  // old = flexposition;
+
   if ( Bluefruit.Central.connected() )
   {
     // Not discovered yet
@@ -201,7 +227,10 @@ void loop()
 //        
 //        clientUart.print( str );
 //      }
-      clientUart.print("hello nolan how are you");
+
+      String thisString = String(ServoPosition);
+      clientUart.print(<thisString>);
+   
       delay(200);
     }
   }

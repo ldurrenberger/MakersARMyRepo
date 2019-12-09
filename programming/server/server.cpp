@@ -192,13 +192,17 @@ void loop()
     {
       // Discovered means in working state
       // Get Serial input and send to Peripheral
-      if ( Serial.available() )
-      {
-        delay(2); // delay a bit for all characters to arrive
-
-        clientUart.print("hi nolan");
-
-      }
+//      if ( Serial.available() )
+//      {
+//        delay(2); // delay a bit for all characters to arrive
+//        
+//        char str[20+1] = { 0 };
+//        Serial.readBytes(str, 20);
+//        
+//        clientUart.print( str );
+//      }
+      clientUart.print("hello nolan how are you");
+      delay(200);
     }
   }
 }

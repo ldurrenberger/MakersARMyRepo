@@ -192,7 +192,7 @@ void bleuart_rx_callback(BLEClientUart& uart_svc)
 void loop()
 {
 
-   int flexposition;    // Input value from the analog pin.
+  int flexposition;    // Input value from the analog pin.
   int servoposition;   // Output value to the servo.
 
   // Read the position of the flex sensor (0 to 1023):
@@ -204,10 +204,8 @@ void loop()
 
 
  //  if (old != flexposition) { 
-      Serial.print("sensor: ");
-      Serial.print(flexposition);
-      Serial.print("  servo: ");
-      Serial.println(servoposition);
+//      Serial.print("sensor: ");
+//      Serial.println(flexposition);
  //  }
   // old = flexposition;
 
@@ -227,11 +225,28 @@ void loop()
 //        
 //        clientUart.print( str );
 //      }
-
-      String thisString = String(ServoPosition);
-      clientUart.print(<thisString>);
+      char flexPosStr[100];
+//      snprintf(flexPosStr, 100, "<%3d>\0", servoposition); 
+      flexPosStr[0] = '<';
+      flexPosStr[1] = servoposition/100 + 48;
+      flexPosStr[2] = (servoposition/10)%10 + 48;
+      flexPosStr[3] = servoposition%10 + 48; 
+      flexPosStr[4] = '>';
+      flexPosStr[5] = '\0';
+      clientUart.print(flexPosStr);
+      Serial.print("Sending string: ");
+      Serial.println(flexPosStr);
+      for(int i = 0; i < 100; i++){
+        if(flexPosStr[i] == 0){
+          Serial.print("BREAK!");
+          break;
+        }
+        Serial.print("   ");
+        Serial.print(i + ": ");
+        Serial.println((int)flexPosStr[i]);
+      }
    
-      delay(200);
+      delay(10);
     }
   }
 }

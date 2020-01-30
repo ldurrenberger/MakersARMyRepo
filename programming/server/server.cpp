@@ -15,7 +15,9 @@
 /*
  * This sketch demonstrate the central API(). A additional bluefruit
  * that has bleuart as peripheral is required for the demo.
- */
+*/
+
+
 #include <bluefruit.h>
 
 BLEClientBas  clientBas;  // battery client
@@ -23,7 +25,6 @@ BLEClientDis  clientDis;  // device information client
 BLEClientUart clientUart; // bleuart client
 
 const int flexpin = A0; 
-int old = 0;
 
 void setup()
 {
@@ -31,6 +32,7 @@ void setup()
   pinMode(flexpin, INPUT);
   
   Serial.begin(115200);
+
   while ( !Serial ) delay(10);   // for nrf52840 with native usb
 
   Serial.println("Bluefruit52 Central BLEUART Example");
@@ -65,6 +67,7 @@ void setup()
    * - Don't use active scan
    * - Start(timeout) with timeout = 0 will scan forever (until connected)
    */
+
   Bluefruit.Scanner.setRxCallback(scan_callback);
   Bluefruit.Scanner.restartOnDisconnect(true);
   Bluefruit.Scanner.setInterval(160, 80); // in unit of 0.625 ms
@@ -76,6 +79,7 @@ void setup()
  * Callback invoked when scanner pick up an advertising data
  * @param report Structural advertising data
  */
+
 void scan_callback(ble_gap_evt_adv_report_t* report)
 {
   // Check if advertising contain BleUart service
@@ -97,6 +101,7 @@ void scan_callback(ble_gap_evt_adv_report_t* report)
  * Callback invoked when an connection is established
  * @param conn_handle
  */
+
 void connect_callback(uint16_t conn_handle)
 {
   Serial.println("Connected");
@@ -164,6 +169,7 @@ void connect_callback(uint16_t conn_handle)
  * @param conn_handle
  * @param reason is a BLE_HCI_STATUS_CODE which can be found in ble_hci.h
  */
+
 void disconnect_callback(uint16_t conn_handle, uint8_t reason)
 {
   (void) conn_handle;
@@ -176,7 +182,8 @@ void disconnect_callback(uint16_t conn_handle, uint8_t reason)
  * Callback invoked when uart received data
  * @param uart_svc Reference object to the service where the data 
  * arrived. In this example it is clientUart
- */
+*/
+
 void bleuart_rx_callback(BLEClientUart& uart_svc)
 {
   Serial.print("[RX]: ");
@@ -202,13 +209,6 @@ void loop()
   servoposition = map(flexposition, 600, 900, 0, 180);
   servoposition = constrain(servoposition, 0, 180);
 
-
- //  if (old != flexposition) { 
-//      Serial.print("sensor: ");
-//      Serial.println(flexposition);
- //  }
-  // old = flexposition;
-
   if ( Bluefruit.Central.connected() )
   {
     // Not discovered yet
@@ -216,27 +216,17 @@ void loop()
     {
       // Discovered means in working state
       // Get Serial input and send to Peripheral
-//      if ( Serial.available() )
-//      {
-//        delay(2); // delay a bit for all characters to arrive
-//        
-//        char str[20+1] = { 0 };
-//        Serial.readBytes(str, 20);
-//        
-//        clientUart.print( str );
-//      }
+
       char flexPosStr[100];
-//      snprintf(flexPosStr, 100, "<%3d>\0", servoposition); 
-      flexPosStr[0] = '<';
-      flexPosStr[1] = servoposition/100 + 48;
-      flexPosStr[2] = (servoposition/10)%10 + 48;
-      flexPosStr[3] = servoposition%10 + 48; 
-      flexPosStr[4] = '>';
-      flexPosStr[5] = '\0';
+
+      sprintf(flexPosStr, "<%d%d%d>", servoposition/100 + '0',
+              (servoposition/10)%10 + '0', servoposition%10 + '0');
+
       clientUart.print(flexPosStr);
       Serial.print("Sending string: ");
       Serial.println(flexPosStr);
-      for(int i = 0; i < 100; i++){
+
+      for(int i = 0; i < 100; i++) {
         if(flexPosStr[i] == 0){
           Serial.print("BREAK!");
           break;

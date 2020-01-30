@@ -91,11 +91,9 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 //                             BLUEFRUIT_SPI_IRQ, BLUEFRUIT_SPI_RST);
 
 
-// A small helper
-
-int bigServoBegin;
-int bigServoEnd;
-int input = SERVOMIN;
+// range variables for 'elbow' servo
+unsigned int servo_elbow_max;
+unsigned int servo_elbow_min;
 
 void error(const __FlashStringHelper*err) {
   Serial.println(err);
@@ -110,18 +108,17 @@ void error(const __FlashStringHelper*err) {
 /**************************************************************************/
 void setup(void)
 {
-  bigServoBegin = 105;
-  bigServoEnd = 105 + ((510 - 105) * 2 / 3);
+  servo_elbow_max = SERVOMIN;
+  servo_elbow_min = SERVOMIN + ((SERVOMAX - SERVOMIN) * 2 / 3);
 
   pwm.begin();
   pwm.setOscillatorFrequency(27000000);  // The int.osc. is closer to 27MHz  
   pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~60 Hz updates
 
   delay(10);
-  Serial.println("Set up PWM for servo stuff");
-  
-  Serial.println(bigServoBegin);
-  Serial.println(bigServoEnd);
+  Serial.println("Initializing PWM for large servos...");
+  Serial.println(servo_elbow_max);
+  Serial.println(servo_elbow_min);
   while (!Serial);  // required for Flora & Micro
   delay(500);
 
@@ -162,7 +159,7 @@ void setup(void)
 
   /* Wait for connection */
   while (! ble.isConnected()) {
-      delay(500);
+    delay(500);
   }
 
   // LED Activity command is only supported from 0.6.6
@@ -197,36 +194,29 @@ void loop(void)
 
     // check response stastus
     if (! ble.waitForOK() ) {
-      Serial.println(F("Failed to send?"));
+      Serial.println(F("Failed to send"));
     }
   }
 
   // Check for incoming characters from Bluefruit
   ble.println("AT+BLEUARTRX");
   ble.readline();
-  bool changeInput = false;
   if (strcmp(ble.buffer, "OK") == 0) {
     // no data
-    Serial.println("Returning oh no");
+    Serial.println("No Data Received");
     return;
   }
-  // Some data was found, its in the buffer
-  Serial.print(F("[Recv] ")); Serial.println(ble.buffer);
-  char num_rec[4];
-  num_rec[0] = ble.buffer[1];
-  num_rec[1] = ble.buffer[2];
-  num_rec[2] = ble.buffer[3];
-  num_rec[3] = 0;
-  Serial.println(num_rec);
+  // Data was received, read from buffer
+  Serial.print(F("[Recv] ")); 
+  Serial.println(ble.buffer);
+  int received_value;
+  sscanf(ble.buffer[1], "%d", &received_value);
+  Serial.println(received_value);
 
-  int actual_num = (int)(((int)(num_rec[0]-48)*100) + ((int)(num_rec[1]-48)*10) + ((int)(num_rec[2]-48)));
-  sscanf(num_rec, "%d", &actual_num);
-
-  int pulseLength = map(actual_num, 180, 0, bigServoBegin, bigServoEnd);
-  Serial.println(actual_num);
+  // convert received value to a pusle width for servo
+  int pulseLength = map(received_value, 180, 0, servo_elbow_max, servo_elbow_min);
   pwm.setPWM(1,0, pulseLength);
   Serial.println(pulseLength);
-  
   ble.waitForOK();
 }
 
